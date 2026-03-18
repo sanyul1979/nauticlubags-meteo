@@ -1,4 +1,4 @@
-const API_KEY = 'c5c793111502405f9e8c8cc6b5431f33ab04157fe77d4d7d81698ca62d1cd2de';
+const API_KEY = '5eedc069ca614d339f4a29adb23257a0d486ea27b6544569aa5117d6ea2bfda5';
 const APP_KEY = 'ebecbcaba91c401a85db9f168c594bad4d5bf84afb8e4e1b99b1602633072070';
 const STATION_NAME = 'Nauticlub';
 

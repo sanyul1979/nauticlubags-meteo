@@ -423,10 +423,13 @@
     try {
       const res  = await fetch('/api/weather');
       const json = await res.json();
-      if (Array.isArray(json) && json.length > 0 && json[0].lastData) {
-        renderCards(json[0].lastData);
+      if (!res.ok) {
+        throw new Error(json?.error || 'Error consultando /api/weather');
+      }
+      if (json && typeof json === 'object' && !Array.isArray(json) && !json.error) {
+        renderCards(json);
       } else {
-        throw new Error(json?.error || JSON.stringify(json).substring(0,80));
+        throw new Error(json?.error || JSON.stringify(json).substring(0,120));
       }
     } catch(e) {
       document.getElementById('content').innerHTML =
@@ -438,9 +441,9 @@
 
   async function fetchAstro() {
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const res   = await fetch('https://api.sunrise-sunset.org/json?lat='+LAT+'&lng='+LON+'&date='+today+'&formatted=0');
+      const res   = await fetch('/api/astro');
       const data  = await res.json();
+      if (!res.ok || !data?.results) throw new Error(data?.error || 'Error consultando /api/astro');
       const r     = data.results;
       const rise  = new Date(r.sunrise).toLocaleString('es-MX',{timeZone:TZ,hour:'2-digit',minute:'2-digit'});
       const set   = new Date(r.sunset).toLocaleString('es-MX',{timeZone:TZ,hour:'2-digit',minute:'2-digit'});
@@ -458,12 +461,9 @@
 
   async function fetchForecast() {
     try {
-      const url  = 'https://api.open-meteo.com/v1/forecast?latitude='+LAT+'&longitude='+LON
-        +'&hourly=temperature_2m,precipitation_probability,weathercode'
-        +'&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max'
-        +'&timezone=America%2FMexico_City&forecast_days=7';
-      const res  = await fetch(url);
+      const res  = await fetch('/api/forecast');
       const data = await res.json();
+      if (!res.ok || !data?.hourly || !data?.daily) throw new Error(data?.error || 'Error consultando /api/forecast');
       const now  = new Date();
 
       // Horas

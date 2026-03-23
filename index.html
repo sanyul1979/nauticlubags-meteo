@@ -234,13 +234,13 @@
   </div>
 
   <div class="space-card" style="position:relative;overflow:hidden;--cc:#faf089">
-    <div class="space-title">⚡ Rayos (GLM)</div>
+    <div class="space-title">🌎 Air Mass</div>
     <div style="position:relative;border-radius:10px;overflow:hidden;background:#000;aspect-ratio:1">
       <img id="loop-glm" style="width:100%;display:block">
       <div id="loop-glm-bar" style="position:absolute;bottom:0;left:0;height:3px;background:#faf089;width:0%;transition:width .3s"></div>
       <div id="loop-glm-time" style="position:absolute;top:6px;right:8px;background:rgba(0,0,0,.6);color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;font-family:monospace"></div>
     </div>
-    <div style="font-size:.62rem;color:var(--muted);margin-top:.5rem"><a href="https://www.star.nesdis.noaa.gov/goes/sector.php?sat=G19&sector=mex&product=GLM" target="_blank" style="color:var(--accent)">ver en NOAA →</a></div>
+    <div style="font-size:.62rem;color:var(--muted);margin-top:.5rem"><a href="https://www.star.nesdis.noaa.gov/goes/sector.php?sat=G19&sector=mex&product=AirMass" target="_blank" style="color:var(--accent)">ver en NOAA →</a></div>
   </div>
 
 </div>
@@ -423,13 +423,10 @@
     try {
       const res  = await fetch('/api/weather');
       const json = await res.json();
-      if (!res.ok) {
-        throw new Error(json?.error || 'Error consultando /api/weather');
-      }
-      if (json && typeof json === 'object' && !Array.isArray(json) && !json.error) {
-        renderCards(json);
+      if (Array.isArray(json) && json.length > 0 && json[0].lastData) {
+        renderCards(json[0].lastData);
       } else {
-        throw new Error(json?.error || JSON.stringify(json).substring(0,120));
+        throw new Error(json?.error || JSON.stringify(json).substring(0,80));
       }
     } catch(e) {
       document.getElementById('content').innerHTML =
@@ -441,9 +438,9 @@
 
   async function fetchAstro() {
     try {
-      const res   = await fetch('/api/astro');
+      const today = new Date().toISOString().split('T')[0];
+      const res   = await fetch('https://api.sunrise-sunset.org/json?lat='+LAT+'&lng='+LON+'&date='+today+'&formatted=0');
       const data  = await res.json();
-      if (!res.ok || !data?.results) throw new Error(data?.error || 'Error consultando /api/astro');
       const r     = data.results;
       const rise  = new Date(r.sunrise).toLocaleString('es-MX',{timeZone:TZ,hour:'2-digit',minute:'2-digit'});
       const set   = new Date(r.sunset).toLocaleString('es-MX',{timeZone:TZ,hour:'2-digit',minute:'2-digit'});
@@ -461,9 +458,12 @@
 
   async function fetchForecast() {
     try {
-      const res  = await fetch('/api/forecast');
+      const url  = 'https://api.open-meteo.com/v1/forecast?latitude='+LAT+'&longitude='+LON
+        +'&hourly=temperature_2m,precipitation_probability,weathercode'
+        +'&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max'
+        +'&timezone=America%2FMexico_City&forecast_days=7';
+      const res  = await fetch(url);
       const data = await res.json();
-      if (!res.ok || !data?.hourly || !data?.daily) throw new Error(data?.error || 'Error consultando /api/forecast');
       const now  = new Date();
 
       // Horas
@@ -534,7 +534,7 @@
       { id: 'loop-vis',  product: 'GEOCOLOR',  bar: 'loop-vis-bar',  lbl: 'loop-vis-time',  label: 'GeoColor · GOES-19' },
       { id: 'loop-ir',   product: '13',        bar: 'loop-ir-bar',   lbl: 'loop-ir-time',   label: 'IR Banda 13 · GOES-19' },
       { id: 'loop-sand', product: 'Sandwich',  bar: 'loop-sand-bar', lbl: 'loop-sand-time', label: 'Sandwich RGB · GOES-19' },
-      { id: 'loop-glm',  product: 'GLM',       bar: 'loop-glm-bar',  lbl: 'loop-glm-time',  label: 'Rayos GLM · GOES-19' },
+      { id: 'loop-glm',  product: 'AirMass',   bar: 'loop-glm-bar',  lbl: 'loop-glm-time',  label: 'Air Mass · GOES-19' },
     ];
     imgs.forEach(function(item) {
       const img = document.getElementById(item.id);

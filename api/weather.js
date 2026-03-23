@@ -2,6 +2,7 @@
 // Usa variables de entorno si existen; si no, cae a las llaves nuevas que compartiste.
 const API_KEY = process.env.AMBIENT_API_KEY || 'dac621dacb6746cb8419cd1a4032d4aabc299e4073d443d2847e4433c151e828';
 const APP_KEY = process.env.AMBIENT_APPLICATION_KEY || '19ba80919e5f4842b3ea0eb97c0abf3241e598f4469d4cdbad58102f77978380';
+const TARGET_MAC = '8C:4F:00:4F:CF:17';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -58,15 +59,25 @@ export default async function handler(req, res) {
       });
     }
 
-    const station = data.reduce((latest, current) => {
-      const latestTs = latest?.lastData?.dateutc || 0;
-      const currentTs = current?.lastData?.dateutc || 0;
-      return currentTs > latestTs ? current : latest;
-    });
+    const station =
+      data.find(d => (d.macAddress || '').toUpperCase() === TARGET_MAC) ||
+      data.find(d => (d.info?.name || '').toLowerCase().includes('nauticlub')) ||
+      null;
+
+    if (!station) {
+      return res.status(404).json({
+        error: 'No se encontró la estación Nauticlub',
+        targetMac: TARGET_MAC,
+        availableStations: data.map(d => ({
+          name: d.info?.name || null,
+          macAddress: d.macAddress || null,
+        })),
+      });
+    }
 
     if (!station?.lastData) {
       return res.status(404).json({
-        error: 'La estación no trae lastData',
+        error: 'La estación Nauticlub no trae lastData',
         station,
       });
     }
@@ -77,6 +88,8 @@ export default async function handler(req, res) {
       debug: {
         pulledFrom: 'ambientweather/v1/devices',
         stationCount: data.length,
+        targetMac: TARGET_MAC,
+        selectedMac: station.macAddress || null,
       },
     });
   } catch (error) {
